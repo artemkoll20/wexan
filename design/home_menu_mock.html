@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Monitor Home Menu Mock</title>
+  <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+  <style>
+    :root {
+      --screen-w: 128px;
+      --screen-h: 64px;
+      --fg: #ffffff;
+      --bg: #000000;
+      --font: "Courier New", monospace;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #111;
+      color: var(--fg);
+      font-family: var(--font);
+    }
+
+    .screen {
+      width: var(--screen-w);
+      height: var(--screen-h);
+      background: var(--bg);
+      border: 1px solid var(--fg);
+      box-sizing: border-box;
+      position: relative;
+      image-rendering: pixelated;
+    }
+
+    .title {
+      position: absolute;
+      top: 4px;
+      left: 4px;
+      font-size: 8px;
+      line-height: 1;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .countdown {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      font-size: 8px;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .divider {
+      position: absolute;
+      left: 1px;
+      top: 16px;
+      width: 126px;
+      height: 1px;
+      background: var(--fg);
+    }
+
+    .arrow {
+      position: absolute;
+      top: 28px;
+      font-size: 16px;
+      line-height: 1;
+    }
+
+    .arrow.left { left: 5px; }
+    .arrow.right { right: 5px; }
+
+    .icon-box {
+      position: absolute;
+      width: 32px;
+      height: 32px;
+      left: 48px;
+      top: 23px;
+    }
+
+    .bt-center {
+      position: absolute;
+      left: 15px;
+      top: 2px;
+      width: 2px;
+      height: 28px;
+      background: var(--fg);
+    }
+
+    .bt-arm {
+      position: absolute;
+      width: 10px;
+      height: 2px;
+      background: var(--fg);
+      transform-origin: left center;
+      left: 15px;
+    }
+
+    .bt-arm.a { top: 7px; transform: rotate(-40deg); }
+    .bt-arm.b { top: 14px; transform: rotate(40deg); }
+    .bt-arm.c { top: 18px; transform: rotate(-40deg); }
+    .bt-arm.d { top: 25px; transform: rotate(40deg); }
+  </style>
+</head>
+<body>
+  <div class="screen" aria-label="128x64 monitor menu home mock">
+    <div class="title">BLE scan</div>
+    <div class="countdown">5...</div>
+    <div class="divider"></div>
+    <div class="arrow left">&lt;</div>
+    <div class="arrow right">&gt;</div>
+    <div class="icon-box" aria-label="bluetooth icon">
+      <div class="bt-center"></div>
+      <div class="bt-arm a"></div>
+      <div class="bt-arm b"></div>
+      <div class="bt-arm c"></div>
+      <div class="bt-arm d"></div>
+    </div>
+  </div>
+</body>
+</html>

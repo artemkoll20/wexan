@@ -1,0 +1,14 @@
+idf_component_register(
+    SRCS 
+        "src/deep_sleep.c"
+    INCLUDE_DIRS 
+        "include"
+        "include/power"
+    REQUIRES 
+        esp_adc 
+        driver 
+        freertos 
+        esp_event
+        esp_hw_support
+        log
+)

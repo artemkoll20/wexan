@@ -1,0 +1,5 @@
+# Ignore build output
+/build/
+
+# Ignore all dot-directories (e.g., .vscode, .devcontainer)
+**/.*/
