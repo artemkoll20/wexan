@@ -15,12 +15,12 @@
 #define MONITOR_MENU_HEADER_DIVIDER_HEIGHT 1
 #define MONITOR_MENU_TITLE_X 4
 #define MONITOR_MENU_TITLE_Y 4
-#define MONITOR_MENU_COUNTDOWN_X -4
-#define MONITOR_MENU_COUNTDOWN_Y 4
+#define MONITOR_MENU_STATUS_X -4
+#define MONITOR_MENU_STATUS_Y 4
 #define MONITOR_MENU_ARROW_LEFT_X 5
 #define MONITOR_MENU_ARROW_RIGHT_X -5
 #define MONITOR_MENU_ARROW_Y 6
-#define MONITOR_MENU_COUNTDOWN_TEXT_SIZE 8
+#define MONITOR_MENU_STATUS_TEXT_SIZE 12
 #define MONITOR_MENU_COUNTDOWN_PHASES 4
 
 static void monitor_apply_box_style(lv_obj_t *obj)
@@ -61,6 +61,30 @@ static lv_obj_t *monitor_create_menu_label(
     lv_label_set_text(label, text ? text : "");
 
     return label;
+}
+
+static void monitor_apply_header_status_style(bool alert)
+{
+    if (!s_monitor_ui.menu_status_label) {
+        return;
+    }
+
+    lv_obj_set_style_text_color(
+        s_monitor_ui.menu_status_label,
+        alert ? lv_color_black() : lv_color_white(),
+        0);
+    lv_obj_set_style_bg_color(
+        s_monitor_ui.menu_status_label,
+        lv_color_white(),
+        0);
+    lv_obj_set_style_bg_opa(
+        s_monitor_ui.menu_status_label,
+        alert ? LV_OPA_COVER : LV_OPA_TRANSP,
+        0);
+    lv_obj_set_style_pad_left(s_monitor_ui.menu_status_label, alert ? 1 : 0, 0);
+    lv_obj_set_style_pad_right(s_monitor_ui.menu_status_label, alert ? 1 : 0, 0);
+    lv_obj_set_style_pad_top(s_monitor_ui.menu_status_label, 0, 0);
+    lv_obj_set_style_pad_bottom(s_monitor_ui.menu_status_label, 0, 0);
 }
 
 static lv_obj_t *monitor_create_pixel_block(lv_obj_t *parent, lv_coord_t x, lv_coord_t y, lv_coord_t w, lv_coord_t h)
@@ -112,12 +136,12 @@ void monitor_menu_layout_create_header(lv_obj_t *root)
         MONITOR_MENU_TITLE_Y,
         "WiFi scan");
 
-    s_monitor_ui.menu_countdown_label = monitor_create_menu_label(
+    s_monitor_ui.menu_status_label = monitor_create_menu_label(
         root,
         &lv_font_unscii_8,
         LV_ALIGN_TOP_RIGHT,
-        MONITOR_MENU_COUNTDOWN_X,
-        MONITOR_MENU_COUNTDOWN_Y,
+        MONITOR_MENU_STATUS_X,
+        MONITOR_MENU_STATUS_Y,
         "");
 }
 
@@ -147,7 +171,7 @@ void monitor_menu_layout_update_header(const monitor_menu_view_t *view)
         ".  ",
         "   ",
     };
-    char countdown_text[MONITOR_MENU_COUNTDOWN_TEXT_SIZE];
+    char countdown_text[MONITOR_MENU_STATUS_TEXT_SIZE];
     uint8_t phase = view->countdown_phase;
 
     if (phase >= MONITOR_MENU_COUNTDOWN_PHASES) {
@@ -155,16 +179,24 @@ void monitor_menu_layout_update_header(const monitor_menu_view_t *view)
     }
 
     lv_label_set_text(s_monitor_ui.menu_title_label, view->title ? view->title : "");
-    if (view->countdown_s == 0U) {
-        lv_obj_add_flag(s_monitor_ui.menu_countdown_label, LV_OBJ_FLAG_HIDDEN);
+    if (view->header_status_text) {
+        monitor_apply_header_status_style(view->header_status_alert);
+        lv_obj_clear_flag(s_monitor_ui.menu_status_label, LV_OBJ_FLAG_HIDDEN);
+        lv_label_set_text(s_monitor_ui.menu_status_label, view->header_status_text);
         return;
     }
-    lv_obj_clear_flag(s_monitor_ui.menu_countdown_label, LV_OBJ_FLAG_HIDDEN);
+
+    monitor_apply_header_status_style(false);
+    if (view->countdown_s == 0U) {
+        lv_obj_add_flag(s_monitor_ui.menu_status_label, LV_OBJ_FLAG_HIDDEN);
+        return;
+    }
+    lv_obj_clear_flag(s_monitor_ui.menu_status_label, LV_OBJ_FLAG_HIDDEN);
     snprintf(
         countdown_text,
         sizeof(countdown_text),
         "%u%s",
         (unsigned)view->countdown_s,
         countdown_suffix_by_phase[phase]);
-    lv_label_set_text(s_monitor_ui.menu_countdown_label, countdown_text);
+    lv_label_set_text(s_monitor_ui.menu_status_label, countdown_text);
 }

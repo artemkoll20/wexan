@@ -11,6 +11,7 @@
 #include "freertos/task.h"
 #include "net/bluetooth.h"
 #include "net/wifi.h"
+#include "power/battery.h"
 
 #define WIFI_SCAN_INTERVAL_MS 9000
 #define BLUETOOTH_SCAN_INTERVAL_MS 9000
@@ -36,6 +37,7 @@ typedef enum {
     APP_RUNTIME_CMD_RIGHT_CLICK,
     APP_RUNTIME_CMD_WIFI_UPDATED,
     APP_RUNTIME_CMD_BLUETOOTH_UPDATED,
+    APP_RUNTIME_CMD_BATTERY_UPDATED,
     APP_RUNTIME_CMD_MENU_CONFIRM,
     APP_RUNTIME_CMD_MENU_BACK,
 } app_runtime_cmd_t;
@@ -47,6 +49,7 @@ typedef struct {
     bluetooth_device_list_t current_bluetooth_devices;
     bluetooth_device_list_t polled_bluetooth_devices;
     bluetooth_device_list_t pending_bluetooth_devices;
+    battery_state_t battery_state;
     char page_text[WIFI_PAGE_TEXT_SIZE];
     app_screen_t screen;
     size_t selected_page_index;
@@ -108,5 +111,6 @@ void app_handle_active_page_left_click(void);
 void app_handle_active_page_right_click(void);
 void app_handle_active_page_wifi_updated(void);
 void app_handle_active_page_bluetooth_updated(void);
+void app_handle_battery_updated(void);
 
 #endif /* APP_CORE_RUNTIME_STATE_H */

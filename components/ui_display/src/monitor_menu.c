@@ -35,7 +35,7 @@ static bool monitor_menu_widgets_ready(void)
 {
     return s_monitor_ui.menu_root
         && s_monitor_ui.menu_title_label
-        && s_monitor_ui.menu_countdown_label
+        && s_monitor_ui.menu_status_label
         && s_monitor_ui.menu_wifi_icon
         && s_monitor_ui.menu_bt_icon
         && s_monitor_ui.menu_custom_icon;

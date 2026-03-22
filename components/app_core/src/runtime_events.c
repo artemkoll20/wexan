@@ -9,6 +9,7 @@
 #include "esp_log.h"
 #include "net/bluetooth.h"
 #include "net/wifi.h"
+#include "power/battery.h"
 #include "ui/buttons.h"
 
 /**
@@ -191,6 +192,16 @@ static void on_bluetooth_scan_updated_event(void *arg, esp_event_base_t event_ba
     }
 }
 
+static void on_battery_updated_event(void *arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
+{
+    (void)arg;
+    (void)event_data;
+
+    if (event_base == BATTERY_EVENT && event_id == BATTERY_EVENT_UPDATED) {
+        app_runtime_post_cmd(APP_RUNTIME_CMD_BATTERY_UPDATED);
+    }
+}
+
 void app_runtime_register_event_handlers(void)
 {
     ESP_ERROR_CHECK(esp_event_handler_register(
@@ -207,5 +218,10 @@ void app_runtime_register_event_handlers(void)
         BLUETOOTH_SCAN_EVENT,
         BLUETOOTH_SCAN_EVENT_UPDATED,
         on_bluetooth_scan_updated_event,
+        NULL));
+    ESP_ERROR_CHECK(esp_event_handler_register(
+        BATTERY_EVENT,
+        BATTERY_EVENT_UPDATED,
+        on_battery_updated_event,
         NULL));
 }

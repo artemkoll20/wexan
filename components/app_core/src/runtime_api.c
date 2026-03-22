@@ -4,6 +4,7 @@
  */
 #include "app/runtime.h"
 #include "runtime_state.h"
+#include "power/battery.h"
 #include "ui/buttons.h"
 #include "ui/monitor.h"
 #include "esp_log.h"
@@ -11,6 +12,7 @@
 #define UI_BUTTON_LEFT_GPIO GPIO_NUM_3
 #define UI_BUTTON_RIGHT_GPIO GPIO_NUM_2
 #define UI_BUTTON_CONFIRM_GPIO GPIO_NUM_4
+#define BATTERY_UPDATE_INTERVAL_MS 15000U
 static const char *TAG = "app_runtime";
 
 esp_err_t app_services_init(void)
@@ -30,6 +32,8 @@ void app_runtime_start(void)
     ui_buttons_init(UI_BUTTON_LEFT_GPIO, UI_BUTTON_RIGHT_GPIO, UI_BUTTON_CONFIRM_GPIO);
     app_runtime_worker_init();
     app_runtime_register_event_handlers();
+    battery_service_init();
+    battery_service_start_periodic(BATTERY_UPDATE_INTERVAL_MS);
     app_runtime_post_cmd(APP_RUNTIME_CMD_BOOT);
     ESP_LOGI(TAG, "App runtime started");
 }

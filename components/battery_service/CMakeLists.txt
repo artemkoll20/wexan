@@ -1,6 +1,7 @@
 idf_component_register(
     SRCS 
         "src/deep_sleep.c"
+        "src/battery.c"
     INCLUDE_DIRS 
         "include"
         "include/power"

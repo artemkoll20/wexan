@@ -31,6 +31,8 @@ typedef struct {
     const char *title;
     uint8_t countdown_s;
     uint8_t countdown_phase;
+    const char *header_status_text;
+    bool header_status_alert;
     monitor_menu_icon_t icon;
     monitor_menu_icon_bitmap_t custom_icon;
 } monitor_menu_view_t;

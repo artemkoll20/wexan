@@ -9,5 +9,5 @@ idf_component_register(
         "src/app_event_handlers.c"
     INCLUDE_DIRS "include"
     PRIV_INCLUDE_DIRS "src"
-    REQUIRES ui_display ui_input wifi_service bluetooth_service esp_event esp_timer freertos
+    REQUIRES ui_display ui_input wifi_service bluetooth_service battery_service esp_event esp_timer freertos
 )

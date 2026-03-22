@@ -5,6 +5,7 @@
 #include "runtime_state.h"
 #include "runtime_scan_controller.h"
 #include "app_core/app_event_handlers.h"
+#include <stdio.h>
 #include <string.h>
 #include "esp_err.h"
 #include "ui/monitor.h"
@@ -30,6 +31,32 @@ static monitor_menu_icon_t app_runtime_icon_to_monitor_icon(app_runtime_page_ico
     default:
         return MONITOR_MENU_ICON_WIFI;
     }
+}
+
+static void app_build_menu_header_status(const battery_state_t *battery_state, char *out, size_t out_size, bool *out_alert)
+{
+    if (!out || out_size == 0U) {
+        return;
+    }
+
+    if (out_alert) {
+        *out_alert = false;
+    }
+
+    if (!battery_state || !battery_state->available) {
+        snprintf(out, out_size, "BAT --");
+        return;
+    }
+
+    if (battery_state->low) {
+        if (out_alert) {
+            *out_alert = true;
+        }
+        snprintf(out, out_size, "LOW %u%%", (unsigned)battery_state->percent);
+        return;
+    }
+
+    snprintf(out, out_size, "BAT %u%%", (unsigned)battery_state->percent);
 }
 
 /**
@@ -478,12 +505,19 @@ static const app_runtime_page_t *app_get_active_page(void)
  */
 static void app_render_menu(void)
 {
-    monitor_menu_view_t view;
+    char header_status_text[12];
+    monitor_menu_view_t view = { 0 };
     const app_runtime_page_t *page = app_get_page_by_index(s_ui_state.selected_page_index);
 
+    app_build_menu_header_status(
+        &s_ui_state.battery_state,
+        header_status_text,
+        sizeof(header_status_text),
+        &view.header_status_alert);
     view.title = page ? page->title : "No pages";
     view.countdown_s = s_ui_state.menu_countdown_s;
     view.countdown_phase = s_ui_state.menu_countdown_phase;
+    view.header_status_text = header_status_text;
     view.icon = page ? app_runtime_icon_to_monitor_icon(page->icon) : MONITOR_MENU_ICON_WIFI;
     view.custom_icon.data = page ? page->custom_icon.data : NULL;
     view.custom_icon.width = page ? page->custom_icon.width : 0U;
@@ -651,6 +685,17 @@ void app_handle_active_page_bluetooth_updated(void)
     const app_runtime_page_t *page = app_get_active_page();
     if (page && page->on_bluetooth_scan_updated) {
         page->on_bluetooth_scan_updated(page->ctx);
+    }
+}
+
+void app_handle_battery_updated(void)
+{
+    if (!battery_get_latest_state(&s_ui_state.battery_state)) {
+        return;
+    }
+
+    if (s_ui_state.screen == APP_SCREEN_MENU) {
+        app_render_menu();
     }
 }
 

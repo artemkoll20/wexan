@@ -112,6 +112,9 @@ void app_runtime_process_cmd(app_runtime_cmd_t cmd)
     case APP_RUNTIME_CMD_BLUETOOTH_UPDATED:
         app_handle_active_page_bluetooth_updated();
         break;
+    case APP_RUNTIME_CMD_BATTERY_UPDATED:
+        app_handle_battery_updated();
+        break;
     case APP_RUNTIME_CMD_MENU_CONFIRM:
         if (!app_can_transition()) {
             break;

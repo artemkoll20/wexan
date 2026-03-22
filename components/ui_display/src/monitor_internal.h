@@ -8,7 +8,7 @@ typedef struct {
     lv_obj_t *text_label;
     lv_obj_t *menu_root;
     lv_obj_t *menu_title_label;
-    lv_obj_t *menu_countdown_label;
+    lv_obj_t *menu_status_label;
     lv_obj_t *menu_wifi_icon;
     lv_obj_t *menu_bt_icon;
     lv_obj_t *menu_custom_icon;
