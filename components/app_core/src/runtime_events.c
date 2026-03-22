@@ -18,6 +18,11 @@
  * the user to confirm their action. It also helps debounce the transition.
  */
 #define SCREEN_TRANSITION_DELAY_MS 300
+/*
+ * Short block after menu confirm to ignore the same physical press if it
+ * bounces into the newly opened page.
+ */
+#define CONFIRM_BLOCK_AFTER_MENU_MS 300
 
 /**
  * @brief Timer handle for delayed menu return from scan screens.
@@ -34,6 +39,7 @@ static esp_timer_handle_t s_confirm_back_timer = NULL;
  * visual feedback to the user.
  */
 static bool s_transition_in_progress = false;
+static int64_t s_confirm_block_until_us = 0;
 
 /**
  * @brief Timer callback for delayed menu return.
@@ -49,7 +55,7 @@ static void on_confirm_back_timer_callback(void *arg)
     s_transition_in_progress = false;
     
     // Post the menu return command
-    app_runtime_post_cmd(APP_RUNTIME_CMD_LEFT_HOLD_3S);
+    app_runtime_post_cmd(APP_RUNTIME_CMD_MENU_BACK);
     
     ESP_LOGI("app_runtime", "Delayed menu return completed");
 }
@@ -138,29 +144,28 @@ static void on_ui_button_event(void *arg, esp_event_base_t event_base, int32_t e
     case UI_BUTTON_EVENT_RIGHT_CLICK:
         app_runtime_post_cmd(APP_RUNTIME_CMD_RIGHT_CLICK);
         break;
-    case UI_BUTTON_EVENT_LEFT_HOLD_3S:
-        app_runtime_post_cmd(APP_RUNTIME_CMD_LEFT_HOLD_3S);
-        break;
-    case UI_BUTTON_EVENT_LEFT_HOLD_4S:
-        app_runtime_post_cmd(APP_RUNTIME_CMD_LEFT_HOLD_4S);
-        break;
-    case UI_BUTTON_EVENT_LEFT_HOLD_5S:
-        app_runtime_post_cmd(APP_RUNTIME_CMD_LEFT_HOLD_5S);
-        break;
     case UI_BUTTON_EVENT_CONFIRM:
+        {
+            int64_t now_us = esp_timer_get_time();
+            if (now_us < s_confirm_block_until_us) {
+                ESP_LOGD("app_runtime", "Confirm ignored (block window)");
+                break;
+            }
         if (s_ui_state.screen == APP_SCREEN_MENU) {
             // In menu: confirm selects current item immediately
             app_runtime_post_cmd(APP_RUNTIME_CMD_MENU_CONFIRM);
+            s_confirm_block_until_us = now_us + (int64_t)CONFIRM_BLOCK_AFTER_MENU_MS * 1000LL;
         } else if (s_ui_state.screen == APP_SCREEN_PAGE) {
             // In scan screen: confirm starts delayed return to menu
             // This prevents accidental returns and provides debouncing
             esp_err_t err = app_start_delayed_menu_return();
             if (err != ESP_OK) {
                 // Fallback to immediate return if timer fails
-                app_runtime_post_cmd(APP_RUNTIME_CMD_LEFT_HOLD_3S);
+                app_runtime_post_cmd(APP_RUNTIME_CMD_MENU_BACK);
             }
         }
         break;
+        }
     default:
         break;
     }

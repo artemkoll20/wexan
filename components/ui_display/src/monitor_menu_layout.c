@@ -118,7 +118,7 @@ void monitor_menu_layout_create_header(lv_obj_t *root)
         LV_ALIGN_TOP_RIGHT,
         MONITOR_MENU_COUNTDOWN_X,
         MONITOR_MENU_COUNTDOWN_Y,
-        "5...");
+        "");
 }
 
 void monitor_menu_layout_create_navigation(lv_obj_t *root)
@@ -139,7 +139,6 @@ void monitor_menu_layout_create_navigation(lv_obj_t *root)
         MONITOR_MENU_ARROW_Y,
         ">");
 }
-
 void monitor_menu_layout_update_header(const monitor_menu_view_t *view)
 {
     static const char *const countdown_suffix_by_phase[MONITOR_MENU_COUNTDOWN_PHASES] = {
@@ -156,6 +155,11 @@ void monitor_menu_layout_update_header(const monitor_menu_view_t *view)
     }
 
     lv_label_set_text(s_monitor_ui.menu_title_label, view->title ? view->title : "");
+    if (view->countdown_s == 0U) {
+        lv_obj_add_flag(s_monitor_ui.menu_countdown_label, LV_OBJ_FLAG_HIDDEN);
+        return;
+    }
+    lv_obj_clear_flag(s_monitor_ui.menu_countdown_label, LV_OBJ_FLAG_HIDDEN);
     snprintf(
         countdown_text,
         sizeof(countdown_text),
