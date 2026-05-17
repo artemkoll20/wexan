@@ -1,6 +1,6 @@
 /*
  * buttons.c
- * Debounced dual-button polling with click and left-button hold events.
+ * Debounced dual-button polling with click events.
  * Enhanced with software debouncing using FreeRTOS queue for button events.
  */
 #include "ui/buttons.h"
@@ -18,7 +18,7 @@ static const char *TAG = "ui_buttons";
 #define UI_BUTTON_TASK_PRIORITY 5
 #define UI_BUTTON_POLL_MS 10
 #define UI_BUTTON_DEBOUNCE_MS 30
-#define UI_BUTTON_CONFIRM_DEBOUNCE_MS 50  // Enhanced debounce for confirm button
+#define UI_BUTTON_CONFIRM_DEBOUNCE_MS 200  // Enhanced debounce for confirm button
 #define UI_BUTTON_HOLD_MS_3S 3000
 #define UI_BUTTON_HOLD_MS_4S 4000
 #define UI_BUTTON_HOLD_MS_5S 5000
@@ -78,7 +78,7 @@ static bool s_initialized = false;
  * Contains GPIO number, event IDs, press state, debounce state,
  * and timing information for the left button.
  *
- * @note Supports hold events (3s, 4s, 5s) for special actions.
+ * @note Hold events are disabled for the left button.
  */
 static ui_button_state_t s_left_btn = { 0 };
 
@@ -438,8 +438,8 @@ void ui_buttons_init(gpio_num_t left_gpio, gpio_num_t right_gpio, gpio_num_t con
         &s_left_btn,
         left_gpio,
         UI_BUTTON_EVENT_LEFT_CLICK,
-        UI_BUTTON_EVENT_LEFT_HOLD_5S,
-        true,
+        UI_BUTTON_EVENT_LEFT_HOLD_3S,
+        false,
         false,  // Not confirm button
         now);
     ui_button_setup(

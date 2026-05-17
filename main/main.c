@@ -29,9 +29,7 @@ void app_main(void)
 
     /* Register service handlers with app_core abstraction layer */
     wifi_service_register_handlers();
-#if CONFIG_BT_ENABLED && CONFIG_BT_BLE_ENABLED && CONFIG_BT_BLUEDROID_ENABLED
     bluetooth_service_register_handlers();
-#endif
 
     /* Start app runtime - menu navigation and mode-specific UI behavior */
     app_runtime_start();

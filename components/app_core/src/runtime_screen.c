@@ -72,14 +72,6 @@ static void app_stop_menu_timer(void)
 }
 
 /**
- * @brief Start the menu navigation timer.
- */
-static void app_start_menu_timer(void)
-{
-    app_timer_start_periodic(s_ui_state.menu_timer, &s_ui_state.menu_timer_running, MENU_TICK_MS);
-}
-
-/**
  * @brief Stop the page tick timer.
  */
 static void app_stop_page_timer(void)
@@ -137,10 +129,10 @@ static runtime_scan_controller_t app_bluetooth_scan_controller(void)
 static size_t app_wifi_snapshot_pages(const void *current_snapshot)
 {
     const wifi_network_list_t *networks = (const wifi_network_list_t *)current_snapshot;
-    (void)networks;
-    // Use abstract handler to get page count
-    // This is a simplified version - in production you'd want proper abstraction
-    return 0;
+    if (!networks) {
+        return 1U;
+    }
+    return wifi_page_count(networks->count);
 }
 
 /**
@@ -151,9 +143,53 @@ static size_t app_wifi_snapshot_pages(const void *current_snapshot)
 static size_t app_bluetooth_snapshot_pages(const void *current_snapshot)
 {
     const bluetooth_device_list_t *devices = (const bluetooth_device_list_t *)current_snapshot;
-    (void)devices;
-    // Use abstract handler to get page count
-    return 0;
+    if (!devices) {
+        return 1U;
+    }
+    return bluetooth_page_count(devices->count);
+}
+
+static void app_scan_page_step(
+    const runtime_scan_controller_t *controller,
+    runtime_scan_page_count_fn_t page_count_fn,
+    runtime_scan_render_fn_t render_fn,
+    bool forward)
+{
+    size_t pages;
+    size_t page;
+
+    if (!controller || !page_count_fn || !render_fn) {
+        return;
+    }
+
+    if (!controller->shown_version || !controller->shown_page) {
+        return;
+    }
+
+    if (*controller->shown_version == 0U) {
+        return;
+    }
+
+    pages = page_count_fn(controller->current_snapshot);
+    if (pages <= 1U) {
+        runtime_scan_controller_apply_pending(controller);
+        render_fn();
+        return;
+    }
+
+    page = *controller->shown_page;
+    if (forward) {
+        page = (page + 1U) % pages;
+    } else {
+        page = (page == 0U) ? (pages - 1U) : (page - 1U);
+    }
+
+    *controller->shown_page = page;
+    if (page == 0U) {
+        runtime_scan_controller_apply_pending(controller);
+    }
+
+    render_fn();
 }
 
 /**
@@ -229,16 +265,20 @@ static void app_builtin_wifi_on_leave(void *ctx)
     app_reset_wifi_ui_state();
 }
 
-/**
- * @brief WiFi page tick handler - updates display.
- * @param ctx Unused context pointer
- */
-static void app_builtin_wifi_on_tick(void *ctx)
+static void app_builtin_wifi_on_left_click(void *ctx)
 {
     runtime_scan_controller_t controller = app_wifi_scan_controller();
 
     (void)ctx;
-    runtime_scan_controller_tick(&controller, app_wifi_snapshot_pages, ui_render_current_wifi_page);
+    app_scan_page_step(&controller, app_wifi_snapshot_pages, ui_render_current_wifi_page, false);
+}
+
+static void app_builtin_wifi_on_right_click(void *ctx)
+{
+    runtime_scan_controller_t controller = app_wifi_scan_controller();
+
+    (void)ctx;
+    app_scan_page_step(&controller, app_wifi_snapshot_pages, ui_render_current_wifi_page, true);
 }
 
 /**
@@ -248,6 +288,7 @@ static void app_builtin_wifi_on_tick(void *ctx)
 static void app_builtin_wifi_on_scan_updated(void *ctx)
 {
     runtime_scan_controller_t controller = app_wifi_scan_controller();
+    size_t pages;
 
     (void)ctx;
 
@@ -260,6 +301,13 @@ static void app_builtin_wifi_on_scan_updated(void *ctx)
         &s_ui_state.polled_networks,
         s_ui_state.polled_networks.version,
         ui_render_current_wifi_page);
+
+    pages = wifi_page_count(s_ui_state.polled_networks.count);
+    if (s_ui_state.has_pending_networks
+        && (pages <= 1U || s_ui_state.shown_wifi_page == 0U)) {
+        runtime_scan_controller_apply_pending(&controller);
+        ui_render_current_wifi_page();
+    }
 }
 
 /**
@@ -285,16 +333,20 @@ static void app_builtin_ble_on_leave(void *ctx)
     app_reset_bluetooth_ui_state();
 }
 
-/**
- * @brief BLE page tick handler - updates display.
- * @param ctx Unused context pointer
- */
-static void app_builtin_ble_on_tick(void *ctx)
+static void app_builtin_ble_on_left_click(void *ctx)
 {
     runtime_scan_controller_t controller = app_bluetooth_scan_controller();
 
     (void)ctx;
-    runtime_scan_controller_tick(&controller, app_bluetooth_snapshot_pages, ui_render_current_bluetooth_page);
+    app_scan_page_step(&controller, app_bluetooth_snapshot_pages, ui_render_current_bluetooth_page, false);
+}
+
+static void app_builtin_ble_on_right_click(void *ctx)
+{
+    runtime_scan_controller_t controller = app_bluetooth_scan_controller();
+
+    (void)ctx;
+    app_scan_page_step(&controller, app_bluetooth_snapshot_pages, ui_render_current_bluetooth_page, true);
 }
 
 /**
@@ -304,6 +356,7 @@ static void app_builtin_ble_on_tick(void *ctx)
 static void app_builtin_ble_on_scan_updated(void *ctx)
 {
     runtime_scan_controller_t controller = app_bluetooth_scan_controller();
+    size_t pages;
 
     (void)ctx;
 
@@ -316,6 +369,13 @@ static void app_builtin_ble_on_scan_updated(void *ctx)
         &s_ui_state.polled_bluetooth_devices,
         s_ui_state.polled_bluetooth_devices.version,
         ui_render_current_bluetooth_page);
+
+    pages = bluetooth_page_count(s_ui_state.polled_bluetooth_devices.count);
+    if (s_ui_state.has_pending_bluetooth_devices
+        && (pages <= 1U || s_ui_state.shown_bluetooth_page == 0U)) {
+        runtime_scan_controller_apply_pending(&controller);
+        ui_render_current_bluetooth_page();
+    }
 }
 
 static const app_runtime_page_t s_builtin_pages[APP_RUNTIME_BUILTIN_PAGE_COUNT] = {
@@ -324,9 +384,9 @@ static const app_runtime_page_t s_builtin_pages[APP_RUNTIME_BUILTIN_PAGE_COUNT] 
         .icon = APP_RUNTIME_PAGE_ICON_WIFI,
         .on_enter = app_builtin_wifi_on_enter,
         .on_leave = app_builtin_wifi_on_leave,
-        .on_left_click = NULL,
-        .on_right_click = NULL,
-        .on_tick = app_builtin_wifi_on_tick,
+        .on_left_click = app_builtin_wifi_on_left_click,
+        .on_right_click = app_builtin_wifi_on_right_click,
+        .on_tick = NULL,
         .on_wifi_scan_updated = app_builtin_wifi_on_scan_updated,
         .on_bluetooth_scan_updated = NULL,
         .ctx = NULL,
@@ -336,9 +396,9 @@ static const app_runtime_page_t s_builtin_pages[APP_RUNTIME_BUILTIN_PAGE_COUNT] 
         .icon = APP_RUNTIME_PAGE_ICON_BLUETOOTH,
         .on_enter = app_builtin_ble_on_enter,
         .on_leave = app_builtin_ble_on_leave,
-        .on_left_click = NULL,
-        .on_right_click = NULL,
-        .on_tick = app_builtin_ble_on_tick,
+        .on_left_click = app_builtin_ble_on_left_click,
+        .on_right_click = app_builtin_ble_on_right_click,
+        .on_tick = NULL,
         .on_wifi_scan_updated = NULL,
         .on_bluetooth_scan_updated = app_builtin_ble_on_scan_updated,
         .ctx = NULL,
@@ -486,9 +546,8 @@ void app_enter_menu_screen(void)
         s_ui_state.selected_page_index = 0;
     }
 
-    s_ui_state.menu_countdown_s = MENU_ENTRY_COUNTDOWN_S;
+    s_ui_state.menu_countdown_s = 0U;
     s_ui_state.menu_countdown_phase = 0U;
-    app_start_menu_timer();
     app_render_menu();
 }
 
@@ -528,7 +587,7 @@ void app_menu_select_next(void)
 
 void app_menu_reset_countdown(void)
 {
-    s_ui_state.menu_countdown_s = MENU_ENTRY_COUNTDOWN_S;
+    s_ui_state.menu_countdown_s = 0U;
     s_ui_state.menu_countdown_phase = 0U;
     if (s_ui_state.screen == APP_SCREEN_MENU) {
         app_render_menu();
@@ -538,6 +597,9 @@ void app_menu_reset_countdown(void)
 void app_handle_menu_tick(void)
 {
     if (s_ui_state.screen != APP_SCREEN_MENU) {
+        return;
+    }
+    if (s_ui_state.menu_countdown_s == 0U) {
         return;
     }
 

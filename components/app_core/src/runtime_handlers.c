@@ -53,25 +53,6 @@ static void app_transition_end(void)
     ESP_LOGD(TAG, "Transition completed");
 }
 
-/**
- * @brief Stop the currently active scan based on active page index
- * 
- * Determines scan type from active_page_index and stops the appropriate scanner.
- * Uses non-blocking stop - sets flag and lets scan tasks terminate themselves.
- */
-static void app_stop_current_scan(void)
-{
-    if (s_ui_state.active_page_index == 0) {
-        /* WiFi scan mode - stop WiFi scan (non-blocking) */
-        ESP_LOGI(TAG, "Stopping WiFi scan");
-        wifi_scan_stop();
-    } else if (s_ui_state.active_page_index == 1) {
-        /* Bluetooth scan mode - stop Bluetooth scan (non-blocking) */
-        ESP_LOGI(TAG, "Stopping Bluetooth scan");
-        bluetooth_scan_stop();
-    }
-}
-
 void app_runtime_process_cmd(app_runtime_cmd_t cmd)
 {
     switch (cmd) {
@@ -114,37 +95,13 @@ void app_runtime_process_cmd(app_runtime_cmd_t cmd)
             app_handle_active_page_right_click();
         }
         break;
-    case APP_RUNTIME_CMD_LEFT_HOLD_3S:
+    case APP_RUNTIME_CMD_MENU_BACK:
         if (!app_can_transition()) {
             break;
         }
         if (s_ui_state.screen == APP_SCREEN_PAGE) {
             app_transition_start();
-            ESP_LOGI(TAG, "Returning to menu (LEFT_HOLD_3S)");
-            app_enter_menu_screen();
-            app_transition_end();
-        }
-        break;
-    case APP_RUNTIME_CMD_LEFT_HOLD_4S:
-        if (!app_can_transition()) {
-            break;
-        }
-        if (s_ui_state.screen == APP_SCREEN_PAGE) {
-            /* Stop current scan and return to menu */
-            app_transition_start();
-            ESP_LOGI(TAG, "Returning to menu (LEFT_HOLD_4S with scan stop)");
-            app_stop_current_scan();
-            app_enter_menu_screen();
-            app_transition_end();
-        }
-        break;
-    case APP_RUNTIME_CMD_LEFT_HOLD_5S:
-        if (!app_can_transition()) {
-            break;
-        }
-        if (s_ui_state.screen == APP_SCREEN_PAGE) {
-            app_transition_start();
-            ESP_LOGI(TAG, "Returning to menu (LEFT_HOLD_5S)");
+            ESP_LOGI(TAG, "Returning to menu (MENU_BACK)");
             app_enter_menu_screen();
             app_transition_end();
         }
