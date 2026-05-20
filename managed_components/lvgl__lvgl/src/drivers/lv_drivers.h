@@ -28,9 +28,9 @@ extern "C" {
 
 #include "display/lcd/lv_lcd_generic_mipi.h"
 #include "display/ili9341/lv_ili9341.h"
-#include "display/st7735/lv_st7735.h"
-#include "display/st7789/lv_st7789.h"
-#include "display/st7796/lv_st7796.h"
+// #include "display/st7735/lv_st7735.h"
+// #include "display/st7789/lv_st7789.h"
+// #include "display/st7796/lv_st7796.h"
 #include "display/nv3007/lv_nv3007.h"
 
 #include "display/renesas_glcdc/lv_renesas_glcdc.h"
